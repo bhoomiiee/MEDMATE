@@ -1,0 +1,70 @@
+name: medmate
+description: MEDMATE - Smart Medicine Management System
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Supabase
+  supabase_flutter: ^2.3.4
+
+  # Local Notifications
+  flutter_local_notifications: ^17.2.4
+  timezone: ^0.9.4
+
+  # State Management
+  provider: ^6.1.2
+
+  # Navigation
+  go_router: ^13.2.4
+
+  # UI Components
+  cupertino_icons: ^1.0.6
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  fl_chart: ^0.67.0
+  lottie: ^3.1.2
+
+  # Date & Time
+  intl: ^0.19.0
+  table_calendar: ^3.1.2
+
+  # File & Image Handling
+  image_picker: ^1.1.2
+  file_picker: ^8.0.3
+  path_provider: ^2.1.3
+  flutter_pdfview: ^1.3.2
+
+  # Storage & Preferences
+  shared_preferences: ^2.2.3
+  hive_flutter: ^1.1.0
+  hive: ^2.2.3
+
+  # Utils
+  uuid: ^4.4.0
+  url_launcher: ^6.3.0
+  permission_handler: ^11.3.1
+  connectivity_plus: ^6.0.3
+  flutter_slidable: ^3.1.0
+  badges: ^3.1.2
+  pin_code_fields: ^8.0.1
+  flutter_animate: ^4.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.9
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+  # Fonts are served via the google_fonts package at runtime — no local .ttf files needed.
+  # Asset directories (images, icons, animations) will be added once files are placed in them.
