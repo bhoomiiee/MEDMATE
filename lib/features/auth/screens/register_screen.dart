@@ -57,7 +57,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'This email is already registered. Please sign in.';
     }
     if (r.contains('password')) return 'Password must be at least 6 characters.';
-    if (r.contains('network') || r.contains('socket')) return 'No internet connection.';
+    if (r.contains('network') || r.contains('socket')) {
+      return 'Unable to connect to server. Please check your internet connection or server status.';
+    }
     if (r.contains('invalid') && r.contains('email')) return 'Please enter a valid email address.';
     return 'Registration failed: $raw';
   }

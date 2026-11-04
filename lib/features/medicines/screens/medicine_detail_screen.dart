@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/services/reminder_monitor_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class MedicineDetailScreen extends StatefulWidget {
   final String medicineId;
@@ -109,24 +111,10 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
             pinned: true,
             backgroundColor: _color,
             elevation: 0,
-            leading: Padding(
-              padding: const EdgeInsets.only(left: 12),
-              child: Center(
-                child: InkWell(
-                  onTap: () => context.go('/medicines'),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white, size: 16),
-                  ),
-                ),
-              ),
+            leading: AppExitButton(
+              fallbackRoute: '/medicines',
+              backgroundColor: Colors.white.withValues(alpha: 0.22),
+              iconColor: Colors.white,
             ),
             actions: [
               IconButton(
@@ -617,14 +605,15 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded,
-                color: AppColors.error, size: 20),
-            onPressed: () async {
-              await SupabaseService.deleteSchedule(schedule['id']);
-              _load();
-            },
-          ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded,
+                  color: AppColors.error, size: 20),
+              onPressed: () async {
+                await NotificationService.cancelScheduleNotifications(schedule['id']);
+                await SupabaseService.deleteSchedule(schedule['id']);
+                _load();
+              },
+            ),
         ],
       ),
     );

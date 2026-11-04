@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/alarm_sound_service.dart';
+import '../services/emergency_contact_service.dart';
 import '../services/supabase_service.dart';
 import '../../features/reminders/screens/medicine_swipe_screen.dart';
 
-/// Checks which reminders are due right now (±15 min window)
+/// Checks which reminders are due right now (at scheduled time, up to +15 min window)
 /// and shows the swipe screen as a full-screen overlay.
 class ReminderOverlayService {
   static bool _showing = false;
+  static final Set<String> _locallyActionedKeys = <String>{};
+  static bool _prefsLoaded = false;
+
+  /// Ensure actioned keys for today are loaded from local cache
+  static Future<void> _ensurePrefsLoaded() async {
+    if (_prefsLoaded) return;
+    try {
+      final now = DateTime.now();
+      final todayStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getStringList('actioned_reminders_$todayStr') ?? [];
+      _locallyActionedKeys.addAll(cached);
+      _prefsLoaded = true;
+    } catch (e) {
+      debugPrint('ReminderOverlayService: Error loading prefs: $e');
+    }
+  }
 
   /// Call this whenever you want to check for pending reminders.
   /// Pass the root [BuildContext] (e.g. from a Navigator key).
@@ -17,11 +38,14 @@ class ReminderOverlayService {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
 
+    await _ensurePrefsLoaded();
+
     final pending = await _fetchPendingReminders(userId);
     if (pending.isEmpty) return;
     if (!context.mounted) return;
 
     _showing = true;
+    AlarmSoundService.play();
     await showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -38,23 +62,31 @@ class ReminderOverlayService {
       ),
       pageBuilder: (ctx, _, __) => MedicineSwipeScreen(
         pendingReminders: pending,
-        onAction: _handleAction,
+        onAction: (id, status) async {
+          AlarmSoundService.stop();
+          await _handleAction(id, status);
+        },
         onDone: () {
+          AlarmSoundService.stop();
           if (ctx.mounted) Navigator.of(ctx).pop();
         },
       ),
     );
+    AlarmSoundService.stop();
     _showing = false;
   }
 
-  /// Fetch schedules whose times fall within ±15 minutes of now
+  /// Fetch schedules whose times fall within the due window (scheduled time to +15 min)
   /// and haven't been logged as taken/skipped yet today.
   static Future<List<Map<String, dynamic>>> _fetchPendingReminders(
       String userId) async {
     try {
+      await _ensurePrefsLoaded();
+
       final now = DateTime.now();
-      final todayStart =
-          DateTime(now.year, now.month, now.day);
+      final todayStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final todayStart = DateTime(now.year, now.month, now.day).toUtc();
       final todayEnd = todayStart.add(const Duration(days: 1));
 
       // Get all active schedules with medicine info
@@ -70,11 +102,15 @@ class ReminderOverlayService {
         if (log['status'] == 'taken' || log['status'] == 'skipped') {
           final scheduledAt = log['scheduled_at'] as String?;
           if (scheduledAt != null) {
-            // Key: scheduleId_HH:mm
+            // Parse UTC timestamp and convert to local time
             final dt = DateTime.parse(scheduledAt).toLocal();
-            final key =
-                '${log['schedule_id']}_${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+            final timeStr =
+                '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+            final key = '${log['schedule_id']}_$timeStr';
             loggedScheduleTimePairs.add(key);
+
+            // Also keep in local set
+            _locallyActionedKeys.add('${log['schedule_id']}_${todayStr}_$timeStr');
           }
         }
       }
@@ -96,25 +132,39 @@ class ReminderOverlayService {
         for (final time in times) {
           final parts = time.split(':');
           if (parts.length < 2) continue;
+          final hour = int.parse(parts[0]);
+          final minute = int.parse(parts[1]);
+          final timeFormatted =
+              '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+          // Check if already taken or skipped locally today
+          final actionedKey =
+              '${schedule['id']}_${todayStr}_$timeFormatted';
+          if (_locallyActionedKeys.contains(actionedKey)) {
+            continue;
+          }
+
+          // Check if already logged in Supabase today
+          final logKey = '${schedule['id']}_$timeFormatted';
+          if (loggedScheduleTimePairs.contains(logKey)) {
+            continue;
+          }
+
           final scheduled = DateTime(
             now.year, now.month, now.day,
-            int.parse(parts[0]), int.parse(parts[1]),
+            hour, minute,
           );
 
-          // Within ±15 minute window
+          // Only trigger at or after the scheduled time, up to a 15-minute window
+          if (now.isBefore(scheduled)) continue;
           final diff = now.difference(scheduled).inMinutes;
-          if (diff < -2 || diff > 15) continue;
-
-          // Already actioned?
-          final key =
-              '${schedule['id']}_${parts[0].padLeft(2, '0')}:${parts[1].padLeft(2, '0')}';
-          if (loggedScheduleTimePairs.contains(key)) continue;
+          if (diff > 15) continue;
 
           final medicine =
               schedule['user_medicines'] as Map<String, dynamic>?;
 
           pending.add({
-            'id': '${schedule['id']}_$time', // unique per schedule+time
+            'id': '${schedule['id']}_$timeFormatted', // unique per schedule+time
             'schedule_id': schedule['id'],
             'medicine_name': medicine?['name'] ?? 'Medicine',
             'dosage':
@@ -148,19 +198,76 @@ class ReminderOverlayService {
       if (timeParts.length < 2) return;
 
       final now = DateTime.now();
+      final todayStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+      final hour = int.parse(timeParts[0]);
+      final minute = int.parse(timeParts[1]);
+      final timeFormatted =
+          '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+
+      // 1. Immediately mark locally so it NEVER pops up again today on this device
+      final actionedKey = '${scheduleId}_${todayStr}_$timeFormatted';
+      _locallyActionedKeys.add(actionedKey);
+
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cached =
+            prefs.getStringList('actioned_reminders_$todayStr') ?? [];
+        if (!cached.contains(actionedKey)) {
+          cached.add(actionedKey);
+          await prefs.setStringList('actioned_reminders_$todayStr', cached);
+        }
+      } catch (e) {
+        debugPrint('ReminderOverlayService: Error persisting to SharedPreferences: $e');
+      }
+
+      // 2. Save to Supabase database (store in UTC for standard timestamptz)
       final scheduled = DateTime(
         now.year, now.month, now.day,
-        int.parse(timeParts[0]), int.parse(timeParts[1]),
+        hour, minute,
       );
 
       await SupabaseService.upsertReminderLog({
         'schedule_id': scheduleId,
         'user_id': Supabase.instance.client.auth.currentUser?.id,
-        'scheduled_at': scheduled.toIso8601String(),
+        'scheduled_at': scheduled.toUtc().toIso8601String(),
         'status': status,
         if (status == 'taken')
-          'taken_at': DateTime.now().toIso8601String(),
+          'taken_at': DateTime.now().toUtc().toIso8601String(),
       });
+
+      // 3. If taken, update remaining stock
+      if (status == 'taken') {
+        try {
+          final schedule = await SupabaseService.client
+              .from('schedules')
+              .select('user_medicine_id')
+              .eq('id', scheduleId)
+              .maybeSingle();
+          final medicineId = schedule?['user_medicine_id'] as String?;
+          if (medicineId != null) {
+            final med = await SupabaseService.getMedicine(medicineId);
+            final currentStock = med?['current_stock'] as int?;
+            if (currentStock != null && currentStock > 0) {
+              await SupabaseService.updateStock(medicineId, currentStock - 1);
+            }
+          }
+        } catch (e) {
+          debugPrint('ReminderOverlayService: Stock update note: $e');
+        }
+      }
+
+      // 4. If skipped, notify emergency contact & caregivers
+      if (status == 'skipped') {
+        SupabaseService.notifyCaregiversOfMissedDose(
+          medicineName: 'scheduled dose',
+          scheduledTime: timeFormatted,
+        );
+        EmergencyContactService.notifyMissedDoseDirectly(
+          medicineName: 'scheduled medication',
+          scheduledTime: timeFormatted,
+        );
+      }
     } catch (e) {
       debugPrint('ReminderOverlayService _handleAction error: $e');
     }

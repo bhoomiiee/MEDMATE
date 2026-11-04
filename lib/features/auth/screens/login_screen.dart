@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return 'Too many attempts. Please wait a minute and try again.';
     }
     if (r.contains('network') || r.contains('socket') || r.contains('connection')) {
-      return 'No internet connection. Please check your network.';
+      return 'Unable to connect to server. Please check your internet connection or server status.';
     }
     return 'Login failed: $raw';
   }

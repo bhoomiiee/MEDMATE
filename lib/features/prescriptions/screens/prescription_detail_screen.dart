@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class PrescriptionDetailScreen extends StatefulWidget {
   final String prescriptionId;
@@ -60,10 +61,7 @@ class _PrescriptionDetailScreenState
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Prescription Details'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.go('/prescriptions'),
-        ),
+        leading: const AppExitButton(fallbackRoute: '/prescriptions'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_outline_rounded,

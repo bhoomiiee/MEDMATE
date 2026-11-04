@@ -27,6 +27,7 @@ Future<void> main() async {
   await NotificationService.initialize();
   await NotificationService.requestPermission();
   ReminderMonitorService.instance.initialize(AppRouter.rootNavigatorKey);
+  NotificationService.syncSchedulesFromDatabase();
 
   runApp(const MedmateApp());
 }

@@ -1,7 +1,11 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../constants/app_constants.dart';
+import 'sendgrid_service.dart';
+import 'firebase_notification_service.dart';
+import 'emergency_contact_service.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -291,6 +295,10 @@ class SupabaseService {
     await _client.from('vaccinations').update(data).eq('id', id);
   }
 
+  static Future<void> deleteVaccination(String id) async {
+    await _client.from('vaccinations').delete().eq('id', id);
+  }
+
   // ── Health Vitals ─────────────────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> getVitals({
     String? vitalType,
@@ -348,11 +356,86 @@ class SupabaseService {
         .eq('id', alertId);
   }
 
+  static Future<void> notifyCaregiversOfMissedDose({
+    required String medicineName,
+    required String scheduledTime,
+  }) async {
+    final userId = currentUserId;
+    if (userId == null) return;
+    try {
+      final profile = await getProfile(userId);
+      final patientName = profile?['full_name'] ?? 'Patient';
+
+      final connections = await _client
+          .from('caregiver_connections')
+          .select('id, caregiver_id, profiles!caregiver_connections_caregiver_id_fkey(full_name, phone, email, fcm_token)')
+          .eq('patient_id', userId)
+          .eq('status', 'accepted');
+
+      for (final conn in connections) {
+        // 1. In-app database alert
+        await _client.from('caregiver_alerts').insert({
+          'connection_id': conn['id'],
+          'patient_id': userId,
+          'alert_type': 'missed_dose',
+          'title': '⚠️ Missed Dose: $medicineName',
+          'message': '$patientName missed their scheduled dose of $medicineName at $scheduledTime.',
+        });
+
+        final caregiverProfile = conn['profiles'] as Map<String, dynamic>?;
+        if (caregiverProfile != null) {
+          final caregiverEmail = caregiverProfile['email'] as String?;
+          final caregiverPhone = caregiverProfile['phone'] as String?;
+          final caregiverFcm = caregiverProfile['fcm_token'] as String?;
+
+          // 2. Email alert via SendGrid
+          if (caregiverEmail != null && caregiverEmail.isNotEmpty) {
+            SendGridService.sendMissedDoseAlert(
+              toEmail: caregiverEmail,
+              patientName: patientName,
+              medicineName: medicineName,
+              scheduledTime: scheduledTime,
+            );
+          }
+
+          // 3. Push notification via Firebase Cloud Messaging
+          if (caregiverFcm != null && caregiverFcm.isNotEmpty) {
+            FirebaseNotificationService.sendCaregiverMissedDosePush(
+              caregiverFcmToken: caregiverFcm,
+              patientName: patientName,
+              medicineName: medicineName,
+              scheduledTime: scheduledTime,
+            );
+          }
+
+          // 4. SMS alert
+          if (caregiverPhone != null && caregiverPhone.isNotEmpty) {
+            EmergencyContactService.sendMissedDoseSms(
+              phoneNumber: caregiverPhone,
+              medicineName: medicineName,
+              scheduledTime: scheduledTime,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error inserting caregiver alert: $e');
+    }
+  }
+
   static Future<Map<String, dynamic>> sendCaregiverInvite(
       String caregiverEmail) async {
-    // Look up caregiver profile by email via auth (handled server-side with Edge Function)
-    // For now return placeholder; real implementation needs an Edge Function
-    throw UnimplementedError('Requires Supabase Edge Function for email lookup');
+    final user = currentUser;
+    if (user == null) {
+      return {'success': false, 'message': 'You must be signed in to invite a caregiver.'};
+    }
+    final profile = await getProfile(user.id);
+    final patientName = profile?['full_name'] ?? 'Your family member';
+
+    return await SendGridService.sendCaregiverInvitation(
+      toEmail: caregiverEmail,
+      patientName: patientName,
+    );
   }
 
   // ── Medicine Search ───────────────────────────────────────────────────────

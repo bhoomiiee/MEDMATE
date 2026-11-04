@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/services/reminder_overlay_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
@@ -119,6 +120,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _lowStockMedicines = lowStock;
         _upcomingVaccinations = upcoming;
       });
+
+      // Ensure all active schedules have exact alarms registered locally
+      NotificationService.syncSchedulesFromDatabase();
     } catch (e) {
       debugPrint('Home load error: $e');
     } finally {

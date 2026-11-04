@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class AddEditMedicineScreen extends StatefulWidget {
   final String? medicineId;
@@ -139,27 +140,7 @@ class _AddEditMedicineScreenState extends State<AddEditMedicineScreen> {
       appBar: AppBar(
         title: Text(_isEdit ? 'Edit Medicine' : 'Add Medicine',
             style: const TextStyle(fontWeight: FontWeight.w700)),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 12),
-          child: Center(
-            child: InkWell(
-              onTap: () => context.go('/medicines'),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: AppColors.softShadow,
-                ),
-                child: const Icon(Icons.close_rounded,
-                    size: 18, color: AppColors.textPrimary),
-              ),
-            ),
-          ),
-        ),
+        leading: const AppExitButton.close(fallbackRoute: '/medicines'),
       ),
       body: _loading && _isEdit
           ? const Center(child: CircularProgressIndicator())

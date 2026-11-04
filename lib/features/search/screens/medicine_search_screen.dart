@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class MedicineSearchScreen extends StatefulWidget {
   const MedicineSearchScreen({super.key});
@@ -41,6 +42,7 @@ class _MedicineSearchScreenState extends State<MedicineSearchScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: const Text('Medicine Search'),
       ),
       body: Column(

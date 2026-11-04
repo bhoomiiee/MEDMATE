@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
 import '../widgets/medicine_card.dart';
 
 class MedicinesListScreen extends StatefulWidget {
@@ -85,6 +86,7 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: Row(
           children: [
             const Text('My Medicines'),

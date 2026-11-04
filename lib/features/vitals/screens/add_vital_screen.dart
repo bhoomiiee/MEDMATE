@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class AddVitalScreen extends StatefulWidget {
   const AddVitalScreen({super.key});
@@ -105,10 +106,7 @@ class _AddVitalScreenState extends State<AddVitalScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Record Vital'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.go('/vitals'),
-        ),
+        leading: const AppExitButton.close(fallbackRoute: '/vitals'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -192,6 +190,23 @@ class _AddVitalScreenState extends State<AddVitalScreen> {
                 loading: _saving,
                 icon: Icons.save_rounded,
                 color: AppColors.error,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      context.canPop() ? context.pop() : context.go('/vitals'),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: const Text('Cancel & Exit'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.textSecondary,
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
             ],

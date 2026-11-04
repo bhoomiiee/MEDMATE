@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -72,6 +73,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: const Text('Dose History'),
         actions: [
           TextButton.icon(

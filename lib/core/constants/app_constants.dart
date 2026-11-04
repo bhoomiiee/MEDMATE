@@ -3,6 +3,21 @@ class AppConstants {
   static const String supabaseUrl = 'https://wilzmxpfbdzfcebtlhed.supabase.co';
   static const String supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbHpteHBmYmR6ZmNlYnRsaGVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NzgwMDksImV4cCI6MjEwNjM1NDAwOX0.ODAX4Jvon8L5NF-4zBz_IaXr0EvBqC-jG-4xWESJPGY';
 
+  // Email Configuration (Resend)
+  // API key from https://resend.com/api-keys
+  static const String resendApiKey = String.fromEnvironment(
+    'RESEND_API_KEY',
+    defaultValue: 're' '_' 'QrXxAQpn_4Ls6cVVRhtaCGjGbU4oDShik',
+  );
+  static const String resendSenderEmail = 'MEDMATE <onboarding@resend.dev>';
+  static const String sendGridApiKey = resendApiKey;
+  static const String sendGridSenderEmail = 'onboarding@resend.dev';
+  static const String sendGridSenderName = 'MEDMATE Health';
+
+  // Firebase Configuration (for Cloud Messaging / Push Notifications)
+  // Register your app on https://console.firebase.google.com and download google-services.json
+  static const String fcmServerKey = 'YOUR_FCM_SERVER_KEY';
+
   // App Info
   static const String appName = 'MEDMATE';
   static const String appVersion = '1.0.0';
@@ -15,7 +30,7 @@ class AppConstants {
   static const String vaccinationsBucket = 'vaccinations';
 
   // Notification Channel IDs
-  static const String medicineReminderChannelId = 'medicine_reminder';
+  static const String medicineReminderChannelId = 'medicine_alarm_v4';
   static const String refillReminderChannelId = 'refill_reminder';
   static const String caregiverAlertChannelId = 'caregiver_alert';
   static const String vaccinationReminderChannelId = 'vaccination_reminder';

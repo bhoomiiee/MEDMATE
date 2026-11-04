@@ -12,6 +12,8 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
+import 'document_viewer_screen.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -173,6 +175,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: const Text('Medical Documents'),
         actions: [
           if (_uploading)
@@ -324,11 +327,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
                           _chip(label, color),
-                          if (date != null) ...[
-                            const SizedBox(width: 8),
+                          if (date != null)
                             Text(
                               date,
                               style: TextStyle(
@@ -337,7 +342,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ],
                         ],
                       ),
                       if (size != null)
@@ -354,26 +358,33 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    FilledButton.tonalIcon(
-                      onPressed: () => _viewDocument(doc),
-                      icon: const Icon(Icons.visibility_rounded, size: 16),
-                      label: const Text(
-                        'View',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryLight.withValues(alpha: 0.35),
-                        foregroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    InkWell(
+                      onTap: () => _viewDocument(doc),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight.withValues(alpha: 0.35),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.visibility_rounded, size: 16, color: AppColors.primary),
+                            SizedBox(width: 4),
+                            Text(
+                              'View',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 2),
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(6),
@@ -397,7 +408,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     );
   }
 
-  Future<void> _viewDocument(Map<String, dynamic> doc) async {
+  void _viewDocument(Map<String, dynamic> doc) async {
     final fileUrl = doc['file_url'] as String?;
     if (fileUrl == null || fileUrl.isEmpty) {
       if (mounted) {
@@ -411,286 +422,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       return;
     }
 
-    final title = doc['title'] as String? ?? 'Document Preview';
-    final docType = doc['doc_type'] as String? ?? 'other';
-    final fileName = (doc['file_name'] ?? '').toString().toLowerCase();
-    final mimeType = (doc['mime_type'] ?? '').toString().toLowerCase();
-    final urlLower = fileUrl.toLowerCase();
-
-    final isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp']
-        .any((ext) => fileName.endsWith('.$ext') || mimeType.contains(ext) || urlLower.contains('.$ext'));
-    final isPdf = fileName.endsWith('.pdf') || mimeType.contains('pdf') || urlLower.contains('.pdf');
-
-    await showDialog(
+    // Require account login password before unlocking and viewing
+    final bool? verified = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) {
-        final isDark = Theme.of(dialogCtx).brightness == Brightness.dark;
-        final color = _docColor(docType);
+      barrierDismissible: true,
+      builder: (dialogCtx) => const _PasswordAuthDialog(),
+    );
 
-        return Dialog(
-          backgroundColor: isDark ? AppColors.darkSurface : Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 620, maxHeight: 680),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Dialog Header
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(_docIcon(docType), color: color, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            doc['file_name'] ?? 'Medical Document',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark ? AppColors.darkTextSecondary : AppColors.textMuted,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                      tooltip: 'Close',
-                      onPressed: () => Navigator.pop(dialogCtx),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Divider(height: 1, color: isDark ? AppColors.darkBorder : AppColors.border),
-                const SizedBox(height: 14),
+    if (verified != true || !mounted) return;
 
-                // Main Content
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      color: isDark
-                          ? AppColors.darkBackground
-                          : AppColors.backgroundSecondary,
-                      child: isImage
-                          ? Center(
-                              child: InteractiveViewer(
-                                clipBehavior: Clip.none,
-                                minScale: 0.8,
-                                maxScale: 4.0,
-                                child: Image.network(
-                                  fileUrl,
-                                  fit: BoxFit.contain,
-                                  loadingBuilder: (ctx, child, progress) {
-                                    if (progress == null) return child;
-                                    return Center(
-                                      child: CircularProgressIndicator(
-                                        value: progress.expectedTotalBytes != null
-                                            ? progress.cumulativeBytesLoaded /
-                                                progress.expectedTotalBytes!
-                                            : null,
-                                        color: AppColors.primary,
-                                      ),
-                                    );
-                                  },
-                                  errorBuilder: (ctx, err, stack) {
-                                    return Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(24),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.broken_image_rounded,
-                                                size: 52, color: AppColors.warning),
-                                            const SizedBox(height: 12),
-                                            Text(
-                                              'Image preview unavailable in-app.',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'You can open or download the image directly in a new tab.',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 16),
-                                            ElevatedButton.icon(
-                                              onPressed: () => _openExternal(fileUrl),
-                                              icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                                              label: const Text('Open in New Tab'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: AppColors.primary,
-                                                foregroundColor: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            )
-                          : Center(
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      width: 76,
-                                      height: 76,
-                                      decoration: BoxDecoration(
-                                        color: isPdf
-                                            ? Colors.red.withValues(alpha: 0.12)
-                                            : AppColors.primary.withValues(alpha: 0.12),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Icon(
-                                        isPdf
-                                            ? Icons.picture_as_pdf_rounded
-                                            : Icons.insert_drive_file_rounded,
-                                        size: 40,
-                                        color: isPdf ? Colors.redAccent : AppColors.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      isPdf ? 'PDF Medical Document' : 'Uploaded File',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      doc['file_name'] ?? 'Record file',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                                      ),
-                                    ),
-                                    if (doc['file_size'] != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          'Size: ${(doc['file_size'] / 1024).toStringAsFixed(1)} KB',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.textMuted,
-                                          ),
-                                        ),
-                                      ),
-                                    const SizedBox(height: 20),
-                                    ElevatedButton.icon(
-                                      onPressed: () => _openExternal(fileUrl),
-                                      icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                                      label: Text(isPdf ? 'Open PDF in Browser' : 'Open / Download File'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Dialog Footer
-                Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        Clipboard.setData(ClipboardData(text: fileUrl));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Document link copied to clipboard!'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.link_rounded, size: 16),
-                      label: const Text('Copy Link', style: TextStyle(fontSize: 12)),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    TextButton(
-                      onPressed: () => Navigator.pop(dialogCtx),
-                      child: Text(
-                        'Close',
-                        style: TextStyle(
-                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () => _openExternal(fileUrl),
-                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                      label: const Text('Open in New Tab'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (ctx) => DocumentViewerScreen(doc: doc),
+      ),
     );
   }
 
@@ -710,6 +454,49 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         );
       }
     }
+  }
+
+  Widget _imageFallback(String fileUrl, bool isDark) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.broken_image_rounded, size: 52, color: AppColors.warning),
+            const SizedBox(height: 12),
+            Text(
+              'Image preview unavailable in-app.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You can open or download the image directly.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _openExternal(fileUrl),
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: const Text('Open in Browser / Viewer'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _chip(String label, Color color) => Container(
@@ -760,6 +547,264 @@ class _DocTypeDialog extends StatelessWidget {
                   dense: true,
                 ))
             .toList(),
+      ),
+    );
+  }
+}
+
+class _PasswordAuthDialog extends StatefulWidget {
+  const _PasswordAuthDialog();
+
+  @override
+  State<_PasswordAuthDialog> createState() => _PasswordAuthDialogState();
+}
+
+class _PasswordAuthDialogState extends State<_PasswordAuthDialog> {
+  final _passwordController = TextEditingController();
+  bool _obscure = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _verifyPassword() async {
+    final password = _passwordController.text.trim();
+    if (password.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter your password';
+      });
+      return;
+    }
+
+    final user = AuthService.currentUser;
+    final email = user?.email;
+    if (email == null) {
+      setState(() {
+        _errorMessage = 'User session not found. Please log in again.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await AuthService.signIn(email: email, password: password);
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      if (mounted) {
+        final errText = e.toString().toLowerCase();
+        setState(() {
+          _isLoading = false;
+          if (errText.contains('invalid login credentials') ||
+              errText.contains('invalid_credentials')) {
+            _errorMessage = 'Incorrect password. Please try again.';
+          } else if (errText.contains('socketexception') ||
+              errText.contains('network') ||
+              errText.contains('failed host lookup')) {
+            _errorMessage = 'Network error. Please check your connection.';
+          } else {
+            _errorMessage = 'Authentication failed. Please check your password.';
+          }
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final textCol = isDark ? AppColors.darkTextPrimary : AppColors.textPrimary;
+    final subTextCol =
+        isDark ? AppColors.darkTextSecondary : AppColors.textSecondary;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: bg,
+      elevation: 8,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight.withValues(alpha: 0.35),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.lock_rounded,
+                  color: AppColors.primary,
+                  size: 28,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Security Verification',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textCol,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Enter your account login password to view this confidential medical document.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: subTextCol,
+                height: 1.35,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _passwordController,
+              obscureText: _obscure,
+              autofocus: true,
+              enabled: !_isLoading,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _verifyPassword(),
+              style: TextStyle(color: textCol, fontSize: 14),
+              decoration: InputDecoration(
+                hintText: 'Enter your password',
+                hintStyle: TextStyle(
+                    color: subTextCol.withValues(alpha: 0.7), fontSize: 14),
+                prefixIcon: const Icon(Icons.password_rounded,
+                    size: 20, color: AppColors.primary),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscure
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                    size: 20,
+                    color: subTextCol,
+                  ),
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                ),
+                filled: true,
+                fillColor:
+                    isDark ? const Color(0xFF0F172A) : AppColors.lavenderMist,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: _errorMessage != null
+                        ? AppColors.error
+                        : isDark
+                            ? Colors.white12
+                            : AppColors.border,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(
+                    color: _errorMessage != null
+                        ? AppColors.error
+                        : AppColors.primary,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+            ),
+            if (_errorMessage != null) ...[
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      size: 16, color: AppColors.error),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(
+                        color: AppColors.error,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed:
+                        _isLoading ? null : () => Navigator.of(context).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(
+                          color: isDark ? Colors.white24 : AppColors.border),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: subTextCol,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _verifyPassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Verify & View',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,11 +3,13 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/emergency_contact_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -109,6 +111,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'updated_at': DateTime.now().toIso8601String(),
       });
 
+      if (_emergencyPhoneCtrl.text.trim().isNotEmpty) {
+        await EmergencyContactService.requestSmsPermission();
+      }
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -144,10 +150,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.go('/profile'),
-        ),
+        leading: const AppExitButton.close(fallbackRoute: '/profile'),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/alarm_sound_service.dart';
 import '../services/auth_service.dart';
+import '../services/emergency_contact_service.dart';
+import '../services/notification_service.dart';
 import '../services/supabase_service.dart';
 import '../services/web_notification.dart';
 import '../theme/app_theme.dart';
@@ -119,6 +121,7 @@ class ReminderMonitorService {
   }) {
     final nowTime = DateFormat('HH:mm').format(DateTime.now());
     AlarmSoundService.play();
+    NotificationService.testAlarmNow();
     showWebNotification(
       '💊 Time for $medicineName',
       'Reminder test: Take $dosage now.',
@@ -284,9 +287,26 @@ class ReminderMonitorService {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     AlarmSoundService.stop();
                     Navigator.pop(ctx);
+                    final user = AuthService.currentUser;
+                    if (user != null && scheduleId != 'test-schedule') {
+                      await SupabaseService.upsertReminderLog({
+                        'schedule_id': scheduleId,
+                        'user_id': user.id,
+                        'scheduled_at': DateTime.now().toIso8601String(),
+                        'status': 'skipped',
+                      });
+                    }
+                    EmergencyContactService.notifyMissedDoseDirectly(
+                      medicineName: medicineName,
+                      scheduledTime: scheduledTime,
+                    );
+                    SupabaseService.notifyCaregiversOfMissedDose(
+                      medicineName: medicineName,
+                      scheduledTime: scheduledTime,
+                    );
                   },
                   child: const Text(
                     'Skip this dose',

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class FamilyScreen extends StatefulWidget {
   const FamilyScreen({super.key});
@@ -57,6 +58,7 @@ class _FamilyScreenState extends State<FamilyScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: const Text('Family & Care',
             style: TextStyle(fontWeight: FontWeight.w700)),
         bottom: PreferredSize(

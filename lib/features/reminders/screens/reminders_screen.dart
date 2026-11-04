@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/emergency_contact_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class RemindersScreen extends StatefulWidget {
   const RemindersScreen({super.key});
@@ -104,6 +107,22 @@ class _RemindersScreenState extends State<RemindersScreen>
       if (status == 'taken')
         'taken_at': DateTime.now().toIso8601String(),
     });
+
+    if (status == 'skipped') {
+      final med = reminder['user_medicines'] as Map<String, dynamic>?;
+      final medName = med?['name'] ?? 'scheduled medicine';
+      final timeStr = DateFormat('HH:mm').format(dt);
+
+      EmergencyContactService.notifyMissedDoseDirectly(
+        medicineName: medName,
+        scheduledTime: timeStr,
+      );
+      SupabaseService.notifyCaregiversOfMissedDose(
+        medicineName: medName,
+        scheduledTime: timeStr,
+      );
+    }
+
     _load();
   }
 
@@ -114,7 +133,26 @@ class _RemindersScreenState extends State<RemindersScreen>
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: const Text('Medication Schedule'),
+        actions: [
+          IconButton(
+            tooltip: 'Test Alarm Sound',
+            icon: const Icon(Icons.alarm_on_rounded),
+            onPressed: () async {
+              await NotificationService.testAlarmNow();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Test alarm sent! Check your notification bar and sound.'),
+                    backgroundColor: AppColors.primary,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -504,6 +542,7 @@ class _RemindersScreenState extends State<RemindersScreen>
                 icon: const Icon(Icons.delete_outline_rounded,
                     color: AppColors.error, size: 20),
                 onPressed: () async {
+                  await NotificationService.cancelScheduleNotifications(s['id']);
                   await SupabaseService.deleteSchedule(s['id']);
                   _load();
                 },

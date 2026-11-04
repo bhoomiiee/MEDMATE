@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class AddPrescriptionScreen extends StatefulWidget {
   const AddPrescriptionScreen({super.key});
@@ -122,10 +123,7 @@ class _AddPrescriptionScreenState extends State<AddPrescriptionScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Add Prescription'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.go('/prescriptions'),
-        ),
+        leading: const AppExitButton.close(fallbackRoute: '/prescriptions'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

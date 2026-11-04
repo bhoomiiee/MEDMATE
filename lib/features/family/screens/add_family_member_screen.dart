@@ -5,6 +5,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class AddFamilyMemberScreen extends StatefulWidget {
   const AddFamilyMemberScreen({super.key});
@@ -86,10 +87,7 @@ class _AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Add Family Member'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.go('/family'),
-        ),
+        leading: const AppExitButton.close(fallbackRoute: '/family'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),

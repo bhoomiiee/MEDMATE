@@ -7,6 +7,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/auth_guard.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class AddScheduleScreen extends StatefulWidget {
   final String medicineId;
@@ -142,14 +143,17 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       // Schedule notifications
       final medName = _medicine?['name'] ?? 'Medicine';
       final dosage = _medicine?['dosage'] ?? '';
+
       for (int i = 0; i < _times.length; i++) {
         final parts = _times[i].split(':');
         final hour = int.parse(parts[0]);
         final minute = int.parse(parts[1]);
-        final notifId = widget.medicineId.hashCode ^ (i * 1000);
+
         if (_frequency == 'daily' ||
             _frequency == 'twice_daily' ||
-            _frequency == 'thrice_daily') {
+            _frequency == 'thrice_daily' ||
+            _frequency == 'every_x_hours') {
+          final notifId = (widget.medicineId.hashCode ^ (i * 1000)) & 0x7FFFFFFF;
           await NotificationService.scheduleDailyReminder(
             id: notifId,
             medicineName: medName,
@@ -157,12 +161,28 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
             hour: hour,
             minute: minute,
             withFood: _withFood,
+            instructions: _instructions.isEmpty ? null : _instructions,
           );
+        } else if (_frequency == 'specific_days' && _selectedDays.isNotEmpty) {
+          for (final dayIdx in _selectedDays) {
+            final weekday = dayIdx + 1; // 0=Mon (1) ... 6=Sun (7)
+            final notifId = (widget.medicineId.hashCode ^ (weekday * 100) ^ (i * 1000)) & 0x7FFFFFFF;
+            await NotificationService.scheduleWeeklyReminder(
+              id: notifId,
+              medicineName: medName,
+              dosage: dosage,
+              dayOfWeek: weekday,
+              hour: hour,
+              minute: minute,
+              withFood: _withFood,
+              instructions: _instructions.isEmpty ? null : _instructions,
+            );
+          }
         } else {
           final now = DateTime.now();
-          var dt = DateTime(
-              now.year, now.month, now.day, hour, minute);
+          var dt = DateTime(now.year, now.month, now.day, hour, minute);
           if (dt.isBefore(now)) dt = dt.add(const Duration(days: 1));
+          final notifId = (widget.medicineId.hashCode ^ (i * 1000)) & 0x7FFFFFFF;
           await NotificationService.scheduleMedicineReminder(
             id: notifId,
             medicineName: medName,
@@ -200,8 +220,7 @@ class _AddScheduleScreenState extends State<AddScheduleScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Add Schedule'),
-        leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+        leading: AppExitButton.close(
           onPressed: () => context.go('/medicines/${widget.medicineId}'),
         ),
       ),

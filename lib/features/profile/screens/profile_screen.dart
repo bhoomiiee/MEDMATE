@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/emergency_contact_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/widgets/app_exit_button.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -105,6 +107,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   expandedHeight: 200,
                   pinned: true,
                   backgroundColor: AppColors.primary,
+                  leading: AppExitButton(
+                    fallbackRoute: '/home',
+                    backgroundColor: Colors.white.withValues(alpha: 0.22),
+                    iconColor: Colors.white,
+                  ),
                   actions: [
                     IconButton(
                       icon: const Icon(Icons.edit_rounded,
@@ -239,9 +246,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           if (emergencyName != null)
                             _infoRow(Icons.person_outline_rounded,
                                 'Contact Person', emergencyName),
-                          if (emergencyPhone != null)
-                            _infoRow(Icons.phone_outlined,
-                                'Emergency Phone', emergencyPhone),
+                          if (emergencyPhone != null) ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoRow(Icons.phone_outlined,
+                                      'Emergency Phone', emergencyPhone),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.call_rounded,
+                                      color: AppColors.secondary, size: 20),
+                                  tooltip: 'Call Emergency Contact',
+                                  onPressed: () => EmergencyContactService
+                                      .callEmergencyContact(emergencyPhone),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.message_rounded,
+                                      color: AppColors.primary, size: 20),
+                                  tooltip: 'Send Alert SMS',
+                                  onPressed: () => EmergencyContactService
+                                      .sendMissedDoseSms(
+                                    phoneNumber: emergencyPhone,
+                                    medicineName: 'scheduled medication',
+                                    scheduledTime: 'today',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ]),
                       const SizedBox(height: 14),
 

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/app_exit_button.dart';
 import '../../documents/screens/documents_screen.dart';
 
 class PrescriptionsScreen extends StatefulWidget {
@@ -72,6 +73,7 @@ class _PrescriptionsScreenState extends State<PrescriptionsScreen>
     return Scaffold(
       backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
+        leading: const AppExitButton(fallbackRoute: '/home'),
         title: const Text('Health Records'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
