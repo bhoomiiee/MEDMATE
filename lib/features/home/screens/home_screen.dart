@@ -146,8 +146,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       for (final time in times) {
         final parts = time.split(':');
         if (parts.length < 2) continue;
-        final dt = DateTime(now.year, now.month, now.day,
-            int.parse(parts[0]), int.parse(parts[1]));
+        final dt = DateTime(now.year, now.month, now.day, int.parse(parts[0]),
+            int.parse(parts[1]));
 
         final formattedDtPrefix =
             DateFormat('yyyy-MM-ddTHH:mm').format(dt).substring(0, 16);
@@ -208,7 +208,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         'user_id': reminder['user_id'] ?? AuthService.currentUser?.id,
         'scheduled_at': dt.toIso8601String(),
         'status': newStatus,
-        'taken_at': newStatus == 'taken' ? DateTime.now().toIso8601String() : null,
+        'taken_at':
+            newStatus == 'taken' ? DateTime.now().toIso8601String() : null,
       });
 
       if (!mounted) return;
@@ -229,11 +230,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   : 'Dose unmarked.'),
             ],
           ),
-          backgroundColor:
-              newStatus == 'taken' ? AppColors.secondary : AppColors.textSecondary,
+          backgroundColor: newStatus == 'taken'
+              ? AppColors.secondary
+              : AppColors.textSecondary,
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       _loadData();
@@ -319,7 +322,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Row(
@@ -328,10 +332,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 10, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.18),
-                                              borderRadius: BorderRadius.circular(20),
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.18),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
                                               border: Border.all(
-                                                color: Colors.white.withValues(alpha: 0.25),
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.25),
                                               ),
                                             ),
                                             child: Row(
@@ -377,7 +384,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.6),
                                         width: 2,
                                       ),
                                     ),
@@ -385,7 +393,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       radius: 22,
                                       backgroundColor: Colors.white,
                                       child: Text(
-                                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                        name.isNotEmpty
+                                            ? name[0].toUpperCase()
+                                            : 'U',
                                         style: const TextStyle(
                                           color: AppColors.primaryDark,
                                           fontSize: 18,
@@ -446,7 +456,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.12),
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(Icons.person_outline_rounded,
@@ -542,7 +553,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         TextButton.icon(
                           onPressed: () => context.go('/reminders'),
                           icon: const Text('Full View'),
-                          label: const Icon(Icons.arrow_forward_rounded, size: 16),
+                          label:
+                              const Icon(Icons.arrow_forward_rounded, size: 16),
                         ),
                       ],
                     ),
@@ -612,6 +624,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
                     // Explore More Grid
                     _buildFeaturesGrid(isDark),
+                    const SizedBox(height: 24),
+
+                    // Objective 4 - Health and Wellness
+                    _buildHealthWellnessGrid(isDark),
                     const SizedBox(height: 20),
 
                     // Medical Disclaimer Card
@@ -711,7 +727,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   valueColor: AlwaysStoppedAnimation<Color>(
                     percent == 100
                         ? AppColors.secondary
-                        : (percent > 0 ? AppColors.primary : AppColors.textMuted),
+                        : (percent > 0
+                            ? AppColors.primary
+                            : AppColors.textMuted),
                   ),
                   strokeCap: StrokeCap.round,
                 ),
@@ -859,7 +877,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                color:
+                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                 letterSpacing: -0.3,
               ),
             ),
@@ -884,13 +903,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     const actions = [
       _QuickAction('Add Med', Icons.add_circle_outline_rounded,
           AppColors.primary, '/medicines/add'),
-      _QuickAction('Schedule', Icons.alarm_rounded, AppColors.teal, '/reminders'),
+      _QuickAction(
+          'Schedule', Icons.alarm_rounded, AppColors.teal, '/reminders'),
       _QuickAction('Rx Scripts', Icons.description_rounded, AppColors.warning,
           '/prescriptions'),
-      _QuickAction('Family', Icons.people_alt_rounded, AppColors.violet, '/family'),
+      _QuickAction(
+          'Family', Icons.people_alt_rounded, AppColors.violet, '/family'),
       _QuickAction('Documents', Icons.folder_shared_rounded, Color(0xFFA855F7),
           '/documents'),
-      _QuickAction('Vitals', Icons.favorite_rounded, AppColors.error, '/vitals'),
+      _QuickAction(
+          'Vitals', Icons.favorite_rounded, AppColors.error, '/vitals'),
     ];
 
     return GridView.count(
@@ -945,7 +967,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                color:
+                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -975,9 +998,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.primary
-                      : (isDark
-                          ? AppColors.darkSurface
-                          : AppColors.surface),
+                      : (isDark ? AppColors.darkSurface : AppColors.surface),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
@@ -1067,7 +1088,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: Icon(
                 isTaken
                     ? Icons.check_circle_rounded
-                    : (isPast ? Icons.access_time_filled_rounded : Icons.alarm_rounded),
+                    : (isPast
+                        ? Icons.access_time_filled_rounded
+                        : Icons.alarm_rounded),
                 color: statusColor,
                 size: 22,
               ),
@@ -1083,8 +1106,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                       letterSpacing: -0.2,
-                      decoration:
-                          isTaken ? TextDecoration.lineThrough : null,
+                      decoration: isTaken ? TextDecoration.lineThrough : null,
                       color: isTaken
                           ? AppColors.textMuted
                           : (isDark
@@ -1154,8 +1176,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   onTap: () => _quickMarkTaken(reminder),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: isTaken
                           ? AppColors.secondarySurface
@@ -1254,7 +1276,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             decoration: BoxDecoration(
               color: AppColors.warningSurface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
             ),
             child: Text(
               '$stock left',
@@ -1333,7 +1356,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               decoration: BoxDecoration(
                 color: AppColors.tealSurface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
               ),
               child: Text(
                 '$daysLeft days left',
@@ -1390,6 +1414,55 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Icons.history_rounded,
               AppColors.warning,
               () => context.go('/history'),
+              isDark,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHealthWellnessGrid(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader('Health & Wellness', null, null),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildFeatureTile(
+              'Daily Health\nTracker',
+              Icons.monitor_heart_rounded,
+              AppColors.primary,
+              () => context.push('/daily-health'),
+              isDark,
+            ),
+            const SizedBox(width: 12),
+            _buildFeatureTile(
+              'Health\nReports',
+              Icons.bar_chart_rounded,
+              Colors.blue,
+              () => context.push('/health-reports'),
+              isDark,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            _buildFeatureTile(
+              'Nearby\nHealthcare',
+              Icons.local_hospital_rounded,
+              AppColors.error,
+              () => context.push('/nearby-healthcare'),
+              isDark,
+            ),
+            const SizedBox(width: 12),
+            _buildFeatureTile(
+              'Government\nSchemes',
+              Icons.health_and_safety_rounded,
+              AppColors.teal,
+              () => context.push('/government-schemes'),
               isDark,
             ),
           ],

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../features/healthcare_access/screens/government_schemes_screen.dart';
+import '../../features/healthcare_access/screens/nearby_healthcare_screen.dart';
 
 import '../../features/auth/screens/profile_setup_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -27,6 +30,11 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/profile/screens/edit_profile_screen.dart';
 import '../../features/vitals/screens/vitals_screen.dart';
 import '../../features/vitals/screens/add_vital_screen.dart';
+
+// Objective 4 - Health Tracking and Reports
+import '../../features/health_tracking/screens/daily_health_screen.dart';
+import '../../features/health_tracking/screens/health_reports_screen.dart';
+
 import '../../core/widgets/main_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -37,11 +45,26 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     navigatorKey: _rootNavigatorKey,
+
     initialLocation: '/home',
+
+    // Objective 4 - Use original MedMate authentication
     redirect: (context, state) {
-      // AUTH BYPASS — remove this block to re-enable login
+      final session = Supabase.instance.client.auth.currentSession;
+
+      final path = state.uri.path;
+
+      final requiresHealthLogin =
+          path == '/daily-health' || path == '/health-reports';
+
+      if (requiresHealthLogin && session == null) {
+        return '/login';
+      }
+
+      // Preserve existing routing for other features
       return null;
     },
+
     routes: [
       GoRoute(
         path: '/splash',
@@ -69,10 +92,13 @@ class AppRouter {
         navigatorKey: _shellNavigatorKey,
         builder: (context, state, child) => MainScaffold(child: child),
         routes: [
+          // Home
           GoRoute(
             path: '/home',
             builder: (context, state) => const HomeScreen(),
           ),
+
+          // Medicines
           GoRoute(
             path: '/medicines',
             builder: (context, state) => const MedicinesListScreen(),
@@ -98,6 +124,8 @@ class AppRouter {
               ),
             ],
           ),
+
+          // Reminders
           GoRoute(
             path: '/reminders',
             builder: (context, state) => const RemindersScreen(),
@@ -111,6 +139,8 @@ class AppRouter {
               ),
             ],
           ),
+
+          // Prescriptions
           GoRoute(
             path: '/prescriptions',
             builder: (context, state) => const PrescriptionsScreen(),
@@ -129,10 +159,14 @@ class AppRouter {
               ),
             ],
           ),
+
+          // Medical Documents
           GoRoute(
             path: '/documents',
             builder: (context, state) => const DocumentsScreen(),
           ),
+
+          // Family and Caregiver
           GoRoute(
             path: '/family',
             builder: (context, state) => const FamilyScreen(),
@@ -149,18 +183,26 @@ class AppRouter {
               ),
             ],
           ),
+
+          // Medicine Search
           GoRoute(
             path: '/search',
             builder: (context, state) => const MedicineSearchScreen(),
           ),
+
+          // Dose History
           GoRoute(
             path: '/history',
             builder: (context, state) => const HistoryScreen(),
           ),
+
+          // Vaccinations
           GoRoute(
             path: '/vaccinations',
             builder: (context, state) => const VaccinationsScreen(),
           ),
+
+          // User Profile
           GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen(),
@@ -172,6 +214,8 @@ class AppRouter {
               ),
             ],
           ),
+
+          // Existing Health Vitals
           GoRoute(
             path: '/vitals',
             builder: (context, state) => const VitalsScreen(),
@@ -182,6 +226,30 @@ class AppRouter {
                 builder: (context, state) => const AddVitalScreen(),
               ),
             ],
+          ),
+
+          // Objective 4 - Daily Health Tracking
+          GoRoute(
+            path: '/daily-health',
+            builder: (context, state) => const DailyHealthScreen(),
+          ),
+
+          // Objective 4 - Health Reports and Charts
+          GoRoute(
+            path: '/health-reports',
+            builder: (context, state) => const HealthReportsScreen(),
+          ),
+
+          // Objective 4 - Nearby Healthcare
+          GoRoute(
+            path: '/nearby-healthcare',
+            builder: (context, state) => const NearbyHealthcareScreen(),
+          ),
+
+          // Objective 4 - Government Healthcare Schemes
+          GoRoute(
+            path: '/government-schemes',
+            builder: (context, state) => const GovernmentSchemesScreen(),
           ),
         ],
       ),
