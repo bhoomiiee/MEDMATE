@@ -628,6 +628,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
                     // Objective 4 - Health and Wellness
                     _buildHealthWellnessGrid(isDark),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('Maternal & Child Health', null, null),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildFeatureTile(
+                          'Maternal &\nChild Health',
+                          Icons.volunteer_activism_rounded,
+                          Colors.pink,
+                          () => context.push('/maternal-child-health'),
+                          isDark,
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 20),
 
                     // Medical Disclaimer Card

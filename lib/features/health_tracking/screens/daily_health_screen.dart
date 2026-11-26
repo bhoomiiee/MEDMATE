@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import 'package:go_router/go_router.dart';
 import '../health_database.dart';
 
@@ -175,7 +176,7 @@ class _DailyHealthScreenState extends State<DailyHealthScreen> {
                         Text(
                           errorMessage!,
                           style: const TextStyle(
-                            color: Colors.red,
+                            color: AppColors.error,
                           ),
                         ),
                     ],
@@ -264,7 +265,7 @@ class _DailyHealthScreenState extends State<DailyHealthScreen> {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: AppColors.error,
             ),
             child: const Text('Delete'),
           ),
@@ -331,7 +332,14 @@ class _DailyHealthScreenState extends State<DailyHealthScreen> {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 30),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: 26),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -381,21 +389,21 @@ class _DailyHealthScreenState extends State<DailyHealthScreen> {
                 target: 2000,
                 unit: 'ml',
                 icon: Icons.water_drop,
-                color: Colors.blue),
+                color: AppColors.teal),
             buildGoalProgress(
                 label: 'Sleep Duration',
                 value: readValue('sleep_hours'),
                 target: 8,
                 unit: 'hours',
                 icon: Icons.bedtime,
-                color: Colors.deepPurple),
+                color: AppColors.primary),
             buildGoalProgress(
                 label: 'Exercise',
                 value: readValue('exercise_minutes'),
                 target: 30,
                 unit: 'minutes',
                 icon: Icons.directions_run,
-                color: Colors.green),
+                color: AppColors.secondary),
             const Text(
                 'Example wellness targets only. Individual needs may differ.',
                 style: TextStyle(fontSize: 12)),
@@ -421,7 +429,6 @@ class _DailyHealthScreenState extends State<DailyHealthScreen> {
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon),
-          border: const OutlineInputBorder(),
         ),
       ),
     );
@@ -432,161 +439,188 @@ class _DailyHealthScreenState extends State<DailyHealthScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daily Health Tracker'),
-        backgroundColor: const Color(0xFF9B83F5),
-        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Track Your Daily Health',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Login screen
-            if (!isSignedIn) ...[
-              const Text(
-                'Please log in to your MedMate account.',
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.go('/login'),
-                child: const Text('Go to MedMate Login'),
-              ),
-            ] else ...[
-              const Text(
-                'Connected to your MedMate account',
-                style: TextStyle(
-                  color: Colors.green,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed:
-                    isLoading ? null : () => context.push('/health-reports'),
-                icon: const Icon(Icons.bar_chart),
-                label: const Text('View Health Reports'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9B83F5),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                ),
-              ),
-              const SizedBox(height: 24),
-              buildDailyGoals(),
-              const SizedBox(height: 24),
-              buildHealthInput(
-                controller: waterController,
-                label: 'Water Intake (ml)',
-                icon: Icons.water_drop,
-              ),
-              buildHealthInput(
-                controller: sleepController,
-                label: 'Sleep Duration (hours)',
-                icon: Icons.bedtime,
-                allowDecimal: true,
-              ),
-              buildHealthInput(
-                controller: exerciseController,
-                label: 'Exercise Duration (minutes)',
-                icon: Icons.directions_run,
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: isLoading ? null : saveHealthActivity,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF9B83F5),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(16),
-                ),
-                child: const Text(
-                  'Save Daily Activity',
-                ),
-              ),
-              const SizedBox(height: 28),
-              const Text(
-                'Saved Health Activities',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: isLoading ? null : loadActivities,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Refresh Activities'),
-              ),
-              const SizedBox(height: 12),
-              if (activities.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'No saved activities yet.',
-                  ),
-                ),
-              ...activities.map((activity) {
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const Icon(
-                      Icons.favorite,
-                      color: Color(0xFF9B83F5),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: AppColors.elevatedShadow,
                     ),
-                    title: Text(
-                      'Water: ${activity['water_ml']} ml',
-                    ),
-                    subtitle: Text(
-                      'Sleep: ${activity['sleep_hours']} hours\n'
-                      'Exercise: ${activity['exercise_minutes']} minutes\n'
-                      'Recorded: ${activity['recorded_at']}',
-                    ),
-                    isThreeLine: true,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        IconButton(
-                          tooltip: 'Edit Activity',
-                          onPressed:
-                              isLoading ? null : () => editActivity(activity),
-                          icon: const Icon(
-                            Icons.edit,
-                            color: Colors.blue,
+                        Icon(
+                          Icons.monitor_heart_rounded,
+                          color: Colors.white,
+                          size: 44,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'Track Your Daily Health',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
                           ),
                         ),
-                        IconButton(
-                          tooltip: 'Delete Activity',
-                          onPressed:
-                              isLoading ? null : () => deleteActivity(activity),
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.red,
+                        SizedBox(height: 8),
+                        Text(
+                          'Track your water intake, sleep and daily exercise.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.5,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
                   ),
-                );
-              }),
-            ],
 
-            if (isLoading)
-              const Padding(
-                padding: EdgeInsets.all(20),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                  const SizedBox(height: 20),
+
+                  // Login screen
+                  if (!isSignedIn) ...[
+                    const Text(
+                      'Please log in to your MedMate account.',
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => context.go('/login'),
+                      child: const Text('Go to MedMate Login'),
+                    ),
+                  ] else ...[
+                    const Text(
+                      'Connected to your MedMate account',
+                      style: TextStyle(
+                        color: AppColors.secondary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: isLoading
+                          ? null
+                          : () => context.push('/health-reports'),
+                      icon: const Icon(Icons.bar_chart),
+                      label: const Text('View Health Reports'),
+                    ),
+                    const SizedBox(height: 24),
+                    buildDailyGoals(),
+                    const SizedBox(height: 24),
+                    buildHealthInput(
+                      controller: waterController,
+                      label: 'Water Intake (ml)',
+                      icon: Icons.water_drop,
+                    ),
+                    buildHealthInput(
+                      controller: sleepController,
+                      label: 'Sleep Duration (hours)',
+                      icon: Icons.bedtime,
+                      allowDecimal: true,
+                    ),
+                    buildHealthInput(
+                      controller: exerciseController,
+                      label: 'Exercise Duration (minutes)',
+                      icon: Icons.directions_run,
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: isLoading ? null : saveHealthActivity,
+                      child: const Text(
+                        'Save Daily Activity',
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      'Saved Health Activities',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: isLoading ? null : loadActivities,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh Activities'),
+                    ),
+                    const SizedBox(height: 12),
+                    if (activities.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Text(
+                          'No saved activities yet.',
+                        ),
+                      ),
+                    ...activities.map((activity) {
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          leading: const Icon(
+                            Icons.favorite,
+                            color: AppColors.primary,
+                          ),
+                          title: Text(
+                            'Water: ${activity['water_ml']} ml',
+                          ),
+                          subtitle: Text(
+                            'Sleep: ${activity['sleep_hours']} hours\n'
+                            'Exercise: ${activity['exercise_minutes']} minutes\n'
+                            'Recorded: ${activity['recorded_at']}',
+                          ),
+                          isThreeLine: true,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'Edit Activity',
+                                onPressed: isLoading
+                                    ? null
+                                    : () => editActivity(activity),
+                                icon: const Icon(
+                                  Icons.edit,
+                                  color: AppColors.teal,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Delete Activity',
+                                onPressed: isLoading
+                                    ? null
+                                    : () => deleteActivity(activity),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+
+                  if (isLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                ],
               ),
-          ],
+            ),
+          ),
         ),
       ),
     );

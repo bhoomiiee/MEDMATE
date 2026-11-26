@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../health_database.dart';
 
@@ -64,8 +65,10 @@ class _HealthReportsScreenState extends State<HealthReportsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Wellness Summary',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Wellness Summary',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 12),
             Text(
                 'Water: ${water >= 2000 ? "At or above example goal" : "Below example goal"} (2000 ml).'),
@@ -81,8 +84,6 @@ class _HealthReportsScreenState extends State<HealthReportsScreen> {
       ),
     );
   }
-
-  final Color primaryColor = const Color(0xFF9B83F5);
 
   @override
   void initState() {
@@ -149,12 +150,19 @@ class _HealthReportsScreenState extends State<HealthReportsScreen> {
     required Color color,
   }) {
     return Card(
-      elevation: 2,
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            Icon(icon, size: 40, color: color),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, size: 32, color: color),
+            ),
             const SizedBox(width: 20),
             Expanded(
               child: Column(
@@ -208,10 +216,7 @@ class _HealthReportsScreenState extends State<HealthReportsScreen> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 8),
             Text('Latest recorded days in selected period ($unit)'),
@@ -307,8 +312,6 @@ class _HealthReportsScreenState extends State<HealthReportsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Health Reports'),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             onPressed: isLoading ? null : loadReports,
@@ -337,86 +340,128 @@ class _HealthReportsScreenState extends State<HealthReportsScreen> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: loadReports,
-                          child: const Text('Try Again'),
+                        SizedBox(
+                          width: 180,
+                          child: ElevatedButton(
+                            onPressed: loadReports,
+                            child: const Text('Try Again'),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Your Health Overview',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+              : SafeArea(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                gradient: AppColors.primaryGradient,
+                                borderRadius: BorderRadius.circular(22),
+                                boxShadow: AppColors.elevatedShadow,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(
+                                    Icons.bar_chart_rounded,
+                                    color: Colors.white,
+                                    size: 44,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'Your Health Overview',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                    'Understand your daily habits and wellness trends.',
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Recorded days: ${dailyRecords.length}',
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            buildPeriodSelector(),
+                            const SizedBox(height: 16),
+                            if (dailyRecords.isEmpty)
+                              const Text(
+                                  'No health activities recorded for this period.')
+                            else ...[
+                              buildSummaryCard(
+                                title: 'Average Water Intake',
+                                value:
+                                    '${calculateAverage('water_ml').toStringAsFixed(0)} ml',
+                                icon: Icons.water_drop,
+                                color: AppColors.teal,
+                              ),
+                              buildSummaryCard(
+                                title: 'Average Sleep Duration',
+                                value:
+                                    '${calculateAverage('sleep_hours').toStringAsFixed(1)} hours',
+                                icon: Icons.bedtime,
+                                color: AppColors.primary,
+                              ),
+                              buildSummaryCard(
+                                title: 'Average Exercise',
+                                value:
+                                    '${calculateAverage('exercise_minutes').toStringAsFixed(0)} min',
+                                icon: Icons.directions_run,
+                                color: AppColors.secondary,
+                              ),
+                              const SizedBox(height: 24),
+                              buildChart(
+                                title: 'Water Intake Report',
+                                field: 'water_ml',
+                                color: AppColors.teal,
+                                defaultMax: 3000,
+                                unit: 'ml',
+                              ),
+                              const SizedBox(height: 16),
+                              buildChart(
+                                title: 'Sleep Duration Report',
+                                field: 'sleep_hours',
+                                color: AppColors.primary,
+                                defaultMax: 12,
+                                unit: 'hours',
+                              ),
+                              const SizedBox(height: 16),
+                              buildChart(
+                                title: 'Exercise Report',
+                                field: 'exercise_minutes',
+                                color: AppColors.secondary,
+                                defaultMax: 60,
+                                unit: 'minutes',
+                              ),
+                              const SizedBox(height: 24),
+                              buildWellnessSummary(),
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Recorded days: ${dailyRecords.length}',
-                      ),
-                      const SizedBox(height: 20),
-                      buildPeriodSelector(),
-                      const SizedBox(height: 16),
-                      if (dailyRecords.isEmpty)
-                        const Text(
-                            'No health activities recorded for this period.')
-                      else ...[
-                        buildSummaryCard(
-                          title: 'Average Water Intake',
-                          value:
-                              '${calculateAverage('water_ml').toStringAsFixed(0)} ml',
-                          icon: Icons.water_drop,
-                          color: Colors.blue,
-                        ),
-                        buildSummaryCard(
-                          title: 'Average Sleep Duration',
-                          value:
-                              '${calculateAverage('sleep_hours').toStringAsFixed(1)} hours',
-                          icon: Icons.bedtime,
-                          color: Colors.deepPurple,
-                        ),
-                        buildSummaryCard(
-                          title: 'Average Exercise',
-                          value:
-                              '${calculateAverage('exercise_minutes').toStringAsFixed(0)} min',
-                          icon: Icons.directions_run,
-                          color: Colors.green,
-                        ),
-                        const SizedBox(height: 24),
-                        buildChart(
-                          title: 'Water Intake Report',
-                          field: 'water_ml',
-                          color: Colors.blue,
-                          defaultMax: 3000,
-                          unit: 'ml',
-                        ),
-                        const SizedBox(height: 16),
-                        buildChart(
-                          title: 'Sleep Duration Report',
-                          field: 'sleep_hours',
-                          color: Colors.deepPurple,
-                          defaultMax: 12,
-                          unit: 'hours',
-                        ),
-                        const SizedBox(height: 16),
-                        buildChart(
-                          title: 'Exercise Report',
-                          field: 'exercise_minutes',
-                          color: Colors.green,
-                          defaultMax: 60,
-                          unit: 'minutes',
-                        ),
-                        const SizedBox(height: 24),
-                        buildWellnessSummary(),
-                      ],
-                    ],
+                    ),
                   ),
                 ),
     );
