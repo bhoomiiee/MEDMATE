@@ -35,6 +35,13 @@ import '../../features/vitals/screens/add_vital_screen.dart';
 import '../../features/health_tracking/screens/daily_health_screen.dart';
 import '../../features/health_tracking/screens/health_reports_screen.dart';
 
+// Objective 5 - Maternal and Child Health
+import '../../features/maternal_child_health/screens/maternal_child_health_screen.dart';
+import '../../features/maternal_child_health/screens/womens_wellness_screen.dart';
+import '../../features/maternal_child_health/screens/supplement_reminders_screen.dart';
+import '../../features/maternal_child_health/screens/child_growth_screen.dart';
+import '../../features/maternal_child_health/screens/development_milestones_screen.dart';
+
 import '../../core/widgets/main_scaffold.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -48,14 +55,19 @@ class AppRouter {
 
     initialLocation: '/home',
 
-    // Objective 4 - Use original MedMate authentication
+    // Health features - Use original MedMate authentication
     redirect: (context, state) {
       final session = Supabase.instance.client.auth.currentSession;
 
       final path = state.uri.path;
 
-      final requiresHealthLogin =
-          path == '/daily-health' || path == '/health-reports';
+      final requiresHealthLogin = path == '/daily-health' ||
+          path == '/health-reports' ||
+          path == '/maternal-child-health' ||
+          path == '/womens-wellness' ||
+          path == '/supplement-reminders' ||
+          path == '/child-growth' ||
+          path == '/development-milestones';
 
       if (requiresHealthLogin && session == null) {
         return '/login';
@@ -250,6 +262,36 @@ class AppRouter {
           GoRoute(
             path: '/government-schemes',
             builder: (context, state) => const GovernmentSchemesScreen(),
+          ),
+
+          // Objective 5 - Maternal and Child Health
+          GoRoute(
+            path: '/maternal-child-health',
+            builder: (context, state) => const MaternalChildHealthScreen(),
+          ),
+
+          // Objective 5 - Women's Wellness
+          GoRoute(
+            path: '/womens-wellness',
+            builder: (context, state) => const WomensWellnessScreen(),
+          ),
+
+// Objective 5 - Supplement Reminders
+          GoRoute(
+            path: '/supplement-reminders',
+            builder: (context, state) => const SupplementRemindersScreen(),
+          ),
+
+          // Objective 5 - Child Growth Tracking
+          GoRoute(
+            path: '/child-growth',
+            builder: (context, state) => const ChildGrowthScreen(),
+          ),
+
+          // Objective 5 - Development Milestones
+          GoRoute(
+            path: '/development-milestones',
+            builder: (context, state) => const DevelopmentMilestonesScreen(),
           ),
         ],
       ),
